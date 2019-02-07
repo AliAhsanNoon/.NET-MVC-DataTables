@@ -1,0 +1,110 @@
+﻿
+@{ ViewBag.Title = "Index"; }
+
+<span class="lead">Employee</span>
+<hr />
+
+<a class="btn glyphicon glyphicon-plus btn-success"
+   onclick="PopupForm('@Url.Action("EmployeeForm","Employee")')"
+   style="margin-bottom:10px">
+</a>
+
+
+<br /><br />
+<table class="table table-bordered table-striped" id="EmployeeTbl">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Office</th>
+            <th>Age</th>
+            <th>Salary</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+</table>
+@section Scripts{
+    <script type="text/javascript">
+        var dataTable, Popup;
+        dataTable = $("#EmployeeTbl").DataTable({
+            "ajax": {
+                "url": "/Employee/GetData",
+                "type": "GET",
+                "datatype": "json"
+            },
+            "columns": [
+                { "data": "Name" },
+                { "data": "Position" },
+                { "data": "Office" },
+                { "data": "Age" },
+                { "data": "Salary" },
+                {
+                    "data": "EmpID",
+                    "render": function (data)
+                    {
+                        return "<a style='margin-left:25px;' class='btn btn-warning glyphicon glyphicon-pencil btn-sm' onclick=PopupForm('@Url.Action("EmployeeForm","Employee")/" + data + "')></a><a style='margin-left:3px;' class='btn btn-danger btn-sm glyphicon glyphicon-trash ' onclick=Delete(" + data +")></a>";
+                    }
+                }
+            ],
+            "language": { "EmployeeTbl": "No data found, Please click on <b>Add New</b> Button" }
+        });
+
+    function PopupForm(url) {
+
+            var formDiv = $('<div/>');
+            $.get(url)
+                .done(function (response) {
+                    formDiv.html(response);
+
+                    Popup = formDiv.dialog({
+                        autoOpen: true,
+                        resizable: true,
+                        title: 'Fill Employee Details',
+                        height: 480,
+                        width: 280,
+                        show: {
+                            effect: "drop",
+                            duration: 500
+                        },
+                        close: function () {
+                            Popup.dialog('destroy').remove();
+                        }
+
+                    });
+                });
+        }
+
+    function SubmitForm(form) {
+            $.ajax({
+                type: "POST",
+                url: form.action,
+                data: $(form).serialize(),
+                success: function (data) {
+                    if (data.success) {
+                        Popup.dialog('close');
+                        dataTable.ajax.reload();
+                    }
+                }
+            });
+            return false;
+    }
+
+    function Delete(id) {
+
+            if(confirm('Are You Sure to Delete this Employee Record ?'))
+            {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Delete","Employee")/' + id,
+                    success: function (data) {
+                        if (data.success)
+                        {
+                            dataTable.ajax.reload();
+                        }
+                    }
+                });
+
+            }
+    }
+    </script>
+}
